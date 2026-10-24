@@ -1,20 +1,37 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Course Reviews</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="reviews.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="script.js" defer></script>
 </head>
 <body>
   <div class="app">
-    <header class="topbar">
-      <div class="brand" data-i18n="brand">Course Reviews</div>
-      <div class="subtitle" data-i18n="subtitle">Course feedback platform</div>
-      <button id="languageToggle" class="language-toggle" type="button" aria-label="Switch language">中文</button>
+    <header class="compass-topbar">
+      <a class="compass-brand" href="index.html" aria-label="CJL Compass" data-i18n-aria-label="brand"><span class="brand-compass">✥</span><span>CJL Compass</span></a>
+      <nav class="compass-nav">
+        <a class="page-switch-link" href="reviews.html" data-i18n="browseReviews">浏览评价</a>
+        <button id="languageToggle" class="language-toggle" type="button" aria-label="Switch language">English</button>
+        <button id="profileButton" class="profile-button hidden" type="button" data-i18n="profile">个人主页</button>
+        <span class="nav-avatar" aria-hidden="true">♟</span>
+      </nav>
     </header>
+    <section class="compass-hero">
+      <div class="hero-inner">
+        <div class="hero-copy">
+          <p class="eyebrow" data-i18n="heroEyebrow">Waseda course review guide</p>
+          <h1>CJL Compass</h1>
+          <p class="hero-tagline">Find your course. Find your way.</p>
+          <p class="hero-description" data-i18n="heroDescription">Real student reviews to help you find the right direction.</p>
+          <label class="hero-search" for="searchInput"><span aria-hidden="true">⌕</span><input id="searchInput" type="search" placeholder="Search courses or instructors" aria-label="Search courses or instructors" data-i18n-placeholder="search"><span class="hero-search-arrow" aria-hidden="true">→</span></label>
+        </div>
+        <div class="hero-compass" aria-hidden="true"><div class="compass-ring"><span class="north">N</span><span class="east">E</span><span class="south">S</span><span class="west">W</span><span class="compass-needle">✥</span></div></div>
+      </div>
+    </section>
     <main class="main">
       <section id="authPanel" class="auth-panel" aria-live="polite">
         <div id="signedOutView">
@@ -41,12 +58,52 @@
         </details>
         <div id="signedInView" class="hidden">
           <p><span data-i18n="signedInAs">Signed in as</span> <strong id="signedInEmail"></strong></p>
-          <button id="signOutButton" type="button" class="secondary-button" data-i18n="signOut">Sign out</button>
         </div>
       </section>
 
-      <section class="toolbar">
-        <input id="searchInput" type="search" placeholder="Search courses or instructors..." aria-label="Search courses or instructors" data-i18n-placeholder="search">
+
+      <section id="profilePanel" class="profile-panel hidden" role="dialog" aria-modal="true" aria-labelledby="profileTitle">
+        <div class="profile-header"><h2 id="profileTitle" data-i18n="profile">个人主页</h2><button id="closeProfileButton" class="profile-close" type="button" aria-label="Close">×</button></div>
+        <p id="profileEmail" class="muted"></p>
+        <form id="nicknameForm" class="nickname-form">
+          <label for="nicknameInput" data-i18n="nickname">昵称</label>
+          <div class="nickname-row"><input id="nicknameInput" type="text" maxlength="40" placeholder="输入昵称" data-i18n-placeholder="nicknamePlaceholder"><button type="submit" class="secondary-button" data-i18n="saveNickname">保存昵称</button></div>
+          <small class="muted" data-i18n="nicknameHelp">该昵称会显示在非匿名评价中。</small>
+          <p id="nicknameMessage" class="notice" role="status"></p>
+        </form>
+        <h3 data-i18n="myReviews">我写过的评价</h3>
+        <div id="myReviewsList" class="my-reviews-list"></div>
+        <button id="signOutButton" type="button" class="secondary-button profile-signout" data-i18n="signOut">退出登录</button>
+      </section>
+      <div id="profileBackdrop" class="profile-backdrop hidden"></div>
+
+      <div class="course-browser review-browser-shell">
+        <aside class="filter-sidebar review-filter-panel" aria-label="Course filters">
+          <h2 data-i18n="filterTitle">筛选条件</h2>
+          <div class="filter-group">
+            <h3 data-i18n="level">Level</h3>
+            <div class="level-chip-filter index-level-chip-filter" id="indexLevelChipFilter" aria-label="Level range">
+              <button type="button" data-level="1" aria-pressed="true">1</button><button type="button" data-level="2" aria-pressed="true">2</button><button type="button" data-level="3" aria-pressed="true">3</button><button type="button" data-level="4" aria-pressed="true">4</button><button type="button" data-level="5" aria-pressed="true">5</button><button type="button" data-level="6" aria-pressed="true">6</button><button type="button" data-level="7" aria-pressed="true">7</button><button type="button" data-level="8" aria-pressed="true">8</button>
+            </div>
+            <div class="filter-range-values level-chip-range-label"><span id="levelMinValue">1</span><span id="levelRangeDash">–</span><span id="levelMaxValue">8</span></div>
+            <input id="levelMinFilter" type="hidden" value="1"><input id="levelMaxFilter" type="hidden" value="8">
+          </div>
+          <div class="filter-group workload-filter">
+            <h3 data-i18n="workload">Workload</h3>
+            <div class="filter-range-values"><span id="workloadMinValue">1</span><span>–</span><span id="workloadMaxValue">10</span></div>
+            <div class="dual-range"><input id="workloadMinFilter" type="range" min="1" max="10" value="1" aria-label="Minimum workload"><input id="workloadMaxFilter" type="range" min="1" max="10" value="10" aria-label="Maximum workload"></div>
+            <div class="filter-endpoints"><span data-i18n="workloadMin">超少</span><span data-i18n="workloadMax">超多</span></div>
+          </div>
+          <div class="filter-group easiness-filter">
+            <h3 data-i18n="easiness">Grading leniency</h3>
+            <div class="filter-range-values"><span id="easinessMinValue">1</span><span>–</span><span id="easinessMaxValue">10</span></div>
+            <div class="dual-range"><input id="easinessMinFilter" type="range" min="1" max="10" value="1" aria-label="Minimum easiness"><input id="easinessMaxFilter" type="range" min="1" max="10" value="10" aria-label="Maximum easiness"></div>
+            <div class="filter-endpoints"><span data-i18n="easinessMin">超严苛</span><span data-i18n="easinessMax">超容易</span></div>
+          </div>
+          <button id="resetFiltersButton" class="reset-filters" type="button" data-i18n="resetFilters">重置筛选</button>
+        </aside>
+        <section class="course-results review-feed-area">
+        <section class="toolbar">
         <select id="categoryFilter" aria-label="Filter by category">
           <option value="" data-i18n="allCategories">All categories</option>
           <option value="Grammar" data-i18n="catGrammar">Grammar</option>
@@ -64,31 +121,54 @@
           <option value="Nihongo" data-i18n="catNihongo">Nihongo</option>
           <option value="Comprehensive Japanese" data-i18n="catComprehensiveJapanese">Comprehensive Japanese</option>
         </select>
-        <select id="sortSelect" aria-label="Sort courses">
-          <option value="name" data-i18n="sortName">Course name</option>
-          <option value="workload" data-i18n="sortWorkload">Workload</option>
-          <option value="easiness" data-i18n="sortEasiness">Easiness</option>
-          <option value="satisfaction" data-i18n="sortSatisfaction">Satisfaction</option>
-        </select>
-      </section>
-      <div id="course-list"></div>
+        </section>
+        <div class="feed-toolbar"><div><h2 data-i18n="courseList">Course List</h2><p class="feed-count" data-i18n="courseListHelp">Select a course to view details and write a review</p></div><span class="view-only-badge" data-i18n="courseListBadge">Courses &amp; Reviews</span></div>
+        <div id="course-list" class="course-list review-feed"></div>
+        </section>
+      </div>
       <section id="courseDetails" class="details hidden">
         <button id="backButton" class="back-button" type="button" data-i18n="back">← Back to courses</button>
         <h2 id="detailCourseName"></h2>
         <p id="detailInstructor" class="muted"></p>
         <div class="rating-grid">
-          <div class="rating-box"><span class="rating-label" data-i18n="workload">Workload</span><strong id="detailWorkload">—</strong><span class="muted" data-i18n="workloadScale">1 = light · 5 = heavy</span></div>
-          <div class="rating-box"><span class="rating-label" data-i18n="easiness">Easiness</span><strong id="detailEasiness">—</strong><span class="muted" data-i18n="easinessScale">1 = difficult · 5 = easy</span></div>
-          <div class="rating-box"><span class="rating-label" data-i18n="satisfaction">Satisfaction</span><strong id="detailSatisfaction">—</strong><span class="muted" data-i18n="satisfactionScale">1 = low · 5 = high</span></div>
+          <div class="rating-box"><span class="rating-label" data-i18n="workload">Workload</span><strong id="detailWorkload">—</strong><span class="muted" data-i18n="workloadScale">1 = light · 10 = heavy</span></div>
+          <div class="rating-box"><span class="rating-label" data-i18n="easiness">Easiness</span><strong id="detailEasiness">—</strong><span class="muted" data-i18n="easinessScale">1 = difficult · 10 = easy</span></div>
+          <div class="rating-box"><span class="rating-label" data-i18n="level">Level</span><strong id="detailPerceivedDifficulty">—</strong><span class="muted" data-i18n="difficultyScale">1 = very easy · 8 = extremely difficult</span></div>
         </div>
         <h3 data-i18n="reviews">Reviews</h3>
         <div id="reviewList" class="review-list"></div>
         <section id="reviewAccessMessage" class="review-access-message"></section>
-        <form id="reviewForm" class="review-form hidden">
-          <label><span data-i18n="workload">Workload</span><select id="workloadInput" required><option value="1" data-i18n="veryLight">1 — Very light</option><option value="2" data-i18n="light">2 — Light</option><option value="3" selected data-i18n="moderate">3 — Moderate</option><option value="4" data-i18n="heavy">4 — Heavy</option><option value="5" data-i18n="veryHeavy">5 — Very heavy</option></select></label>
-          <label><span data-i18n="easiness">Easiness</span><select id="easinessInput" required><option value="1" data-i18n="veryDifficult">1 — Very difficult</option><option value="2" data-i18n="difficult">2 — Difficult</option><option value="3" selected data-i18n="moderate">3 — Moderate</option><option value="4" data-i18n="easy">4 — Easy</option><option value="5" data-i18n="veryEasy">5 — Very easy</option></select></label>
-          <label><span data-i18n="satisfaction">Satisfaction</span><select id="satisfactionInput" required><option value="1" data-i18n="veryLow">1 — Very low</option><option value="2" data-i18n="low">2 — Low</option><option value="3" selected data-i18n="average">3 — Average</option><option value="4" data-i18n="high">4 — High</option><option value="5" data-i18n="veryHigh">5 — Very high</option></select></label>
-          <label><span data-i18n="comment">Comment</span><textarea id="commentInput" rows="3" maxlength="500" placeholder="Share your experience (optional)" data-i18n-placeholder="commentPlaceholder"></textarea></label>
+        <form id="reviewForm" class="review-form redesigned-form hidden">
+          <section class="level-picker">
+            <div class="level-heading"><strong><span data-i18n="level">Level</span></strong><span data-i18n="levelHint">Choose based on your experience · 1–8</span></div>
+            <div class="level-buttons" role="group" aria-label="Level rating">
+              <button type="button" class="level-button" data-level="1">1</button><button type="button" class="level-button" data-level="2">2</button><button type="button" class="level-button" data-level="3">3</button><button type="button" class="level-button" data-level="4">4</button><button type="button" class="level-button active" data-level="5">5</button><button type="button" class="level-button" data-level="6">6</button><button type="button" class="level-button" data-level="7">7</button><button type="button" class="level-button" data-level="8">8</button>
+            </div>
+            <select id="perceivedDifficultyInput" class="visually-hidden-select" required aria-label="Level"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select>
+          </section>
+          <div class="slider-rating-grid">
+            <section class="slider-rating workload-tone">
+              <label for="workloadSlider" data-i18n="workload">Workload</label>
+              <div class="slider-score"><strong id="workloadValue">7</strong><span>/ 10</span></div>
+              <input id="workloadSlider" type="range" min="1" max="10" value="7" step="1" aria-label="Workload">
+              <div class="slider-ticks"><span>1</span><span>5</span><span>10</span></div><div class="slider-endpoints"><span data-i18n="workloadMin">Very light</span><span data-i18n="workloadMax">Very heavy</span></div>
+              <select id="workloadInput" class="visually-hidden-select" required aria-label="Workload"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7" selected>7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select>
+            </section>
+            <section class="slider-rating easiness-tone">
+              <div class="slider-label-group"><label for="easinessSlider" data-i18n="easiness">Easiness</label><small class="rating-definition" data-i18n="easinessDefinition">How leniently the instructor grades</small></div>
+              <div class="slider-score"><strong id="easinessValue">7</strong><span>/ 10</span></div>
+              <input id="easinessSlider" type="range" min="1" max="10" value="7" step="1" aria-label="Easiness">
+              <div class="slider-ticks"><span>1</span><span>5</span><span>10</span></div><div class="slider-endpoints"><span data-i18n="easinessMin">Very difficult</span><span data-i18n="easinessMax">Very easy</span></div>
+              <select id="easinessInput" class="visually-hidden-select" required aria-label="Easiness"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7" selected>7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option></select>
+            </section>
+          </div>
+          <div class="form-divider"></div>
+          <section class="comment-section">
+            <div class="section-heading"><span class="section-icon">▤</span><div><h3 data-i18n="shareExperience">Share your experience</h3><p data-i18n="shareExperienceHelp">Specific details are more helpful to other students</p></div></div>
+            <label for="commentInput" data-i18n="comment">Course review <span aria-hidden="true">*</span></label>
+            <textarea id="commentInput" rows="5" maxlength="500" placeholder="What did you learn?&#10;How were assignments and exams graded?&#10;What was the instructor's teaching style like?&#10;Would you recommend this course?" data-i18n-placeholder="commentPlaceholder"></textarea>
+          </section>
+          <label class="anonymous-option"><span class="anonymous-copy"><strong data-i18n="anonymousLabel">Publish anonymously</strong><small data-i18n="anonymousHelp">Your email and account identity will not be shown with this review.</small></span><span class="default-pill" data-i18n="anonymousDefault">Default enabled</span><input type="checkbox" id="anonymousInput" checked></label>
           <button id="submitReviewButton" type="submit" class="primary-button" data-i18n="submit">Submit review</button>
           <p class="notice" data-i18n="oneReviewRule">Each signed-in account can submit one review per course.</p>
         </form>
