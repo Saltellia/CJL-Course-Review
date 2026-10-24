@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CJL Compass · 浏览课程评价</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="reviews.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="reviews.js" defer></script>
+</head>
+<body class="reviews-page">
+  <header class="compass-topbar">
+    <a class="compass-brand" href="index.html" aria-label="CJL Compass"><span class="brand-compass">✥</span><span>CJL Compass</span></a>
+    <nav class="compass-nav">
+      <a href="index.html" data-i18n="backToCourses">课程评价与提交</a>
+      <button id="languageToggle" class="language-toggle" type="button">English</button>
+      <a href="index.html#about" data-i18n="about">关于我们</a>
+      <span class="nav-avatar" aria-hidden="true">♟</span>
+    </nav>
+  </header>
+
+  <section class="compass-hero">
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <p class="eyebrow" data-i18n="heroEyebrow">Waseda course review guide</p>
+        <h1>CJL Compass</h1>
+        <p class="hero-tagline">Find your course. Find your way.</p>
+        <p class="hero-description" data-i18n="heroDescription">Real student reviews to help you find the right direction.</p>
+        <form id="reviewSearchForm" class="hero-search">
+          <span aria-hidden="true">⌕</span>
+          <input id="reviewSearchInput" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="Search courses or instructors">
+          <button type="submit" aria-label="Search" data-i18n-aria-label="searchButton">→</button>
+        </form>
+      </div>
+      <div class="hero-compass" aria-hidden="true"><div class="compass-ring"><span class="north">N</span><span class="east">E</span><span class="south">S</span><span class="west">W</span><span class="compass-needle">✥</span></div></div>
+    </div>
+  </section>
+
+  <main class="review-browser-shell">
+    <aside class="review-filter-panel">
+      <div class="filter-panel-title"><span>☷</span><h2 data-i18n="filterTitle">Filters</h2></div>
+      <section class="review-filter-group level-filter">
+        <h3><span>◉</span><span data-i18n="level">Level</span></h3>
+        <div class="level-chip-filter" id="levelChipFilter" aria-label="Level range">
+          <button type="button" data-level="1">1</button><button type="button" data-level="2">2</button><button type="button" data-level="3">3</button><button type="button" data-level="4">4</button><button type="button" data-level="5">5</button><button type="button" data-level="6">6</button><button type="button" data-level="7">7</button><button type="button" data-level="8">8</button>
+        </div>
+        <p class="filter-current" id="levelCurrent">1–8</p>
+      </section>
+      <section class="review-filter-group workload-filter">
+        <h3><span>◉</span><span data-i18n="workload">Workload</span></h3>
+        <div class="range-summary"><span id="workloadMinLabel">1</span><span>–</span><span id="workloadMaxLabel">10</span></div>
+        <div class="filter-dual-range"><input id="workloadMin" type="range" min="1" max="10" value="1" aria-label="Minimum workload"><input id="workloadMax" type="range" min="1" max="10" value="10" aria-label="Maximum workload"></div>
+        <div class="range-caption"><span data-i18n="veryLight">Light</span><span data-i18n="veryHeavy">Heavy</span></div>
+      </section>
+      <section class="review-filter-group easiness-filter">
+        <h3><span>◉</span><span data-i18n="easiness">Grading leniency</span></h3>
+        <div class="range-summary"><span id="easinessMinLabel">1</span><span>–</span><span id="easinessMaxLabel">10</span></div>
+        <div class="filter-dual-range"><input id="easinessMin" type="range" min="1" max="10" value="1" aria-label="Minimum easiness"><input id="easinessMax" type="range" min="1" max="10" value="10" aria-label="Maximum easiness"></div>
+        <div class="range-caption"><span data-i18n="veryStrict">Strict</span><span data-i18n="veryEasy">Lenient</span></div>
+      </section>
+      <label class="category-label" for="reviewCategoryFilter" data-i18n="category">Course category</label>
+      <select id="reviewCategoryFilter"><option value="" data-i18n="allCategories">All categories</option></select>
+      <button id="resetReviewFilters" class="reset-review-filters" type="button" data-i18n="resetFilters">Reset filters</button>
+      <div class="sidebar-compass" aria-hidden="true"><span>N</span><div>✥</div><small>W　　　　 E</small></div>
+    </aside>
+
+    <section class="review-feed-area">
+      <div class="feed-toolbar">
+        <div><h2 data-i18n="allReviews">Course reviews</h2><p id="reviewCount" class="feed-count">正在加载评价…</p></div>
+        <span class="view-only-badge" data-i18n="viewOnly">View only</span>
+      </div>
+      <p id="reviewsStatus" class="reviews-status" role="status"></p>
+      <div id="reviewFeed" class="review-feed"></div>
+      <nav id="reviewPagination" class="review-pagination" aria-label="Review pages" data-i18n-aria-label="reviewPages"></nav>
+    </section>
+  </main>
+  <footer class="compass-footer"><span>CJL Compass</span><span data-i18n="footerNote">Course reviews are a guide only; consider your own learning needs.</span></footer>
+</body>
+</html>
