@@ -1,3 +1,5 @@
+// Supabase configuration. The publishable/anon key is intended for browser use.
+// NEVER put a service_role or secret key in this file.
 const SUPABASE_URL = "https://uogckssolwkmvtyqslqm.supabase.co";
 const SUPABASE_KEY = "sb_publishable_gLmUH3fZ9eWOO_TRflgnQw_ZGdfmknQ";
 
@@ -16,7 +18,7 @@ const $ = (id) => document.getElementById(id);
 
 const translations = {
   en: {
-    unnamedCourse:"Unnamed course", unknownInstructor:"Unknown", brand:"CJL Compass", heroEyebrow:"Waseda course review guide", heroDescription:"Real student reviews to help you find the right direction.", courseList:"Course List", courseListHelp:"Select a course to view details and write a review", courseListBadge:"Courses & Reviews", subtitle:"Course feedback platform", search:"Search courses or instructors...", browseReviews:"Browse reviews",
+    unnamedCourse:"Unnamed course", unknownInstructor:"Unknown", brand:"CJL Compass", heroEyebrow:"CJL course review guide", heroDescription:"Real student reviews to help you find the right direction.", courseList:"Course List", courseListHelp:"Select a course to view details and write a review", courseListBadge:"Courses & Reviews", subtitle:"Course feedback platform", search:"Search courses or instructors...", browseReviews:"Browse reviews",
     filterTitle:"Filter courses", resetFilters:"Reset filters",
     allCategories:"All categories", catGrammar:"Grammar", catWrittenExpression:"Written Expression", catReadingComprehension:"Reading Comprehension", catListeningComprehension:"Listening Comprehension", catSocietyCulture:"Society and Culture", catOralExpression:"Oral Expression", catVocabulary:"Vocabulary", catBusinessJapanese:"Business Japanese", catAcademicJapanese:"Academic Japanese", catZeroBeginners:"Japanese for 'Zero' Beginners", catKanji:"Skill-based Japanese(Kanji)", catConversation:"Skill-based Japanese(Conversation)", catNihongo:"Nihongo", catComprehensiveJapanese:"Comprehensive Japanese",
     instructor:"Instructor", noResults:"No matching courses found.", noReviews:"No reviews yet", firstReview:"No reviews yet. Be the first to review this course.",
@@ -34,11 +36,11 @@ const translations = {
     reviewSaved:"Your review has been submitted.", oneReviewRule:"Each signed-in account can submit one review per course.",
     sendCodeError:"Could not send the code. Check the email settings and try again.", verifyCodeError:"That code is invalid or expired. Request a new code.",
     signedOut:"You have signed out.", signOutError:"Could not sign out. Please try again.", otpPrompt:"Enter the code from your email.",
-    duplicateReview:"This account already has a review for this course.", reviewDate:"Submitted", genericError:"Something went wrong. Please try again.",
+    duplicateReview:"This account already has a review for this course.", reviewDate:"Submitted", like:"Like", liked:"Liked", loginToLike:"Sign in to like reviews.", likeError:"Could not update like. Please try again.", genericError:"Something went wrong. Please try again.",
     developerLogin:"Developer login (demo testing)", developerLoginHelp:"Use a test account created in Supabase Dashboard. This does not bypass database security.", developerEmail:"Test account email", developerPassword:"Password", developerSignIn:"Sign in with test account", developerLoginError:"Test login failed. Check the email and password, and confirm the user exists in Supabase."
   },
   zh: {
-    unnamedCourse:"未命名课程", unknownInstructor:"未知", brand:"CJL Compass", heroEyebrow:"早稻田大学课程评价指南", heroDescription:"真实的课程评价，帮你找到更适合的学习方向。", courseList:"课程列表", courseListHelp:"选择课程查看详情并撰写评价", courseListBadge:"课程与评价", subtitle:"课程反馈平台", search:"搜索课程名称或教员姓名……", browseReviews:"浏览评价",
+    unnamedCourse:"未命名课程", unknownInstructor:"未知", brand:"CJL Compass", heroEyebrow:"CJL院系课程评价指南", heroDescription:"真实的课程评价，帮你找到更适合的学习方向。", courseList:"课程列表", courseListHelp:"选择课程查看详情并撰写评价", courseListBadge:"课程与评价", subtitle:"课程反馈平台", search:"搜索课程名称或教员姓名……", browseReviews:"浏览评价",
     filterTitle:"筛选条件", resetFilters:"重置筛选",
     allCategories:"所有类别", catGrammar:"语法", catWrittenExpression:"书面表达", catReadingComprehension:"阅读理解", catListeningComprehension:"听力理解", catSocietyCulture:"社会与文化", catOralExpression:"口语表达", catVocabulary:"词汇", catBusinessJapanese:"商务日语", catAcademicJapanese:"学术日语", catZeroBeginners:"日语零基础入门", catKanji:"专项日语（汉字）", catConversation:"专项日语（会话）", catNihongo:"日本语（Nihongo）", catComprehensiveJapanese:"综合日语",
     instructor:"教员", noResults:"没有找到符合条件的课程。", noReviews:"暂无评价", firstReview:"暂无评价，成为第一个评价这门课程的人吧。",
@@ -56,7 +58,7 @@ const translations = {
     reviewSaved:"评价已提交。", oneReviewRule:"每个登录账号对每门课程只能提交一条评价。",
     sendCodeError:"验证码发送失败，请检查邮箱设置后重试。", verifyCodeError:"验证码无效或已过期，请重新获取验证码。",
     signedOut:"已退出登录。", signOutError:"退出登录失败，请重试。", otpPrompt:"请输入邮件中的验证码。",
-    duplicateReview:"当前账号已经评价过这门课程。", reviewDate:"提交时间", genericError:"发生错误，请重试。",
+    duplicateReview:"当前账号已经评价过这门课程。", reviewDate:"提交时间", like:"点赞", liked:"已点赞", loginToLike:"请先登录后再点赞。", likeError:"点赞失败，请重试。", genericError:"发生错误，请重试。",
     developerLogin:"开发者登录（Demo 测试）", developerLoginHelp:"请使用在 Supabase Dashboard 中创建的测试账号。此入口不会绕过数据库安全策略。", developerEmail:"测试账号邮箱", developerPassword:"密码", developerSignIn:"使用测试账号登录", developerLoginError:"测试账号登录失败。请检查邮箱和密码，并确认该用户已在 Supabase 中创建。"
   }
 };
@@ -68,6 +70,9 @@ let currentCourse = null;
 let currentUser = null;
 let pendingEmail = "";
 let editingReviewId = null;
+let reviewLikeCounts = new Map();
+let likedReviewKeys = new Set();
+const reviewLikeKey = (review) => `${review.source ? "imported" : "user"}:${String(review.id)}`;
 const t = (key) => translations[currentLanguage][key] || key;
 
 function applyLanguage() {
@@ -132,6 +137,43 @@ async function loadCourses() {
   }
   courses = data || [];
   renderCourses();
+}
+
+async function loadReviewLikes() {
+  const { data, error } = await supabaseClient.from("review_likes").select("review_id, user_id");
+  if (error) { console.error("Failed to load review likes:", error); return; }
+  reviewLikeCounts = new Map();
+  likedReviewKeys = new Set();
+  (data || []).forEach((row) => {
+    const key = String(row.review_id);
+    reviewLikeCounts.set(key, (reviewLikeCounts.get(key) || 0) + 1);
+    if (currentUser && row.user_id === currentUser.id) likedReviewKeys.add(key);
+  });
+}
+
+async function toggleCourseReviewLike(review, button) {
+  if (!currentUser) { alert(t("loginToLike")); return; }
+  const key = reviewLikeKey(review);
+  const liked = likedReviewKeys.has(key);
+  button.disabled = true;
+  try {
+    if (liked) {
+      const { error } = await supabaseClient.from("review_likes").delete().eq("review_id", key).eq("user_id", currentUser.id);
+      if (error) throw error;
+      likedReviewKeys.delete(key);
+      reviewLikeCounts.set(key, Math.max(0, (reviewLikeCounts.get(key) || 0) - 1));
+    } else {
+      const { error } = await supabaseClient.from("review_likes").insert({ review_id: key, user_id: currentUser.id });
+      if (error) throw error;
+      likedReviewKeys.add(key);
+      reviewLikeCounts.set(key, (reviewLikeCounts.get(key) || 0) + 1);
+    }
+    renderCourseDetails();
+  } catch (error) {
+    console.error("Could not update review like:", error);
+    alert(t("likeError"));
+    button.disabled = false;
+  }
 }
 
 async function loadReviews() {
@@ -346,6 +388,16 @@ function renderCourseDetails() {
       date.className = "muted";
       date.textContent = review.created_at ? `${t("reviewDate")}: ${new Date(review.created_at).toLocaleString()}` : "";
       article.appendChild(date);
+      const likeKey = reviewLikeKey(review);
+      const likeButton = document.createElement("button");
+      likeButton.type = "button";
+      likeButton.className = "course-review-like-button";
+      const isLiked = likedReviewKeys.has(likeKey);
+      likeButton.textContent = `${isLiked ? "♥" : "♡"} ${reviewLikeCounts.get(likeKey) || 0} ${t(isLiked ? "liked" : "like")}`;
+      likeButton.classList.toggle("is-liked", isLiked);
+      likeButton.setAttribute("aria-pressed", String(isLiked));
+      likeButton.addEventListener("click", () => toggleCourseReviewLike(review, likeButton));
+      article.appendChild(likeButton);
       list.appendChild(article);
     });
   }
@@ -636,6 +688,8 @@ supabaseClient.auth.onAuthStateChange((_event, session) => {
     currentUser = session?.user || null;
     updateAuthUI();
     await loadReviews();
+    await loadReviewLikes();
+    if (currentCourse) renderCourseDetails();
   });
 });
 
@@ -645,5 +699,7 @@ async function init() {
   currentUser = session?.user || null;
   updateAuthUI();
   await Promise.all([loadCourses(), loadReviews()]);
+  await loadReviewLikes();
+  if (currentCourse) renderCourseDetails();
 }
 init();

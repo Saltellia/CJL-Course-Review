@@ -6,10 +6,10 @@ const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
 const $ = (id) => document.getElementById(id);
 const copy = {
   zh: {
-    backToCourses:"课程评价与提交", about:"关于我们", heroEyebrow:"早稻田大学课程评价指南", heroDescription:"真实的课程评价，帮你找到更适合的学习方向。", searchPlaceholder:"搜索课程或教员名称（支持模糊搜索）", filterTitle:"筛选条件", level:"Level", workload:"工作量", easiness:"给分宽松度", veryLight:"超少", veryHeavy:"超多", veryStrict:"超严苛", veryEasy:"超容易", category:"课程类别", allCategories:"所有类别", resetFilters:"重置筛选", allReviews:"课程评价", viewOnly:"仅浏览", loading:"正在加载评价…", reviewCount:(n)=>`共 ${n} 条评价`, noResults:"没有找到符合条件的评价。请尝试调整筛选范围。", loadError:"评价加载失败。请检查 Supabase reviews 表的 SELECT 权限与 RLS 策略。", workloadLabel:"工作量", easinessLabel:"给分宽松度", levelLabel:"Level", reviewTag:"评价", courseFallback:"课程", studentFallback:"学生", anonymous:"匿名用户", submitted:"发布于", instructor:"教员", footerNote:"课程信息仅供选课参考，请结合个人情况判断。", searchButton:"搜索", reviewPages:"评价分页"
+    backToCourses:"课程评价与提交", about:"关于我们", heroEyebrow:"早稻田大学课程评价指南", heroDescription:"真实的课程评价，帮你找到更适合的学习方向。", searchPlaceholder:"搜索课程或教员名称（支持模糊搜索）", filterTitle:"筛选条件", level:"Level", workload:"工作量", easiness:"给分宽松度", veryLight:"超少", veryHeavy:"超多", veryStrict:"超严苛", veryEasy:"超容易", category:"课程类别", allCategories:"所有类别", resetFilters:"重置筛选", allReviews:"课程评价", viewOnly:"仅浏览", loading:"正在加载评价…", reviewCount:(n)=>`共 ${n} 条评价`, noResults:"没有找到符合条件的评价。请尝试调整筛选范围。", loadError:"评价加载失败。请检查 Supabase reviews 表的 SELECT 权限与 RLS 策略。", workloadLabel:"工作量", easinessLabel:"给分宽松度", levelLabel:"Level", reviewTag:"评价", courseFallback:"课程", studentFallback:"学生", anonymous:"匿名用户", submitted:"发布于", instructor:"教员", footerNote:"课程信息仅供选课参考，请结合个人情况判断。", searchButton:"搜索", reviewPages:"评价分页", sortLabel:"排序", sortHot:"按热度排序", sortTime:"按时间排序", like:"点赞", liked:"已点赞", loginToLike:"请登录后点赞", likeError:"点赞操作失败，请重试"
   },
   en: {
-    backToCourses:"Course ratings & submit", about:"About", heroEyebrow:"Waseda course review guide", heroDescription:"Real student reviews to help you find the right direction.", searchPlaceholder:"Search courses or instructors", filterTitle:"Filters", level:"Level", workload:"Workload", easiness:"Grading leniency", veryLight:"Light", veryHeavy:"Heavy", veryStrict:"Strict", veryEasy:"Lenient", category:"Course category", allCategories:"All categories", resetFilters:"Reset filters", allReviews:"Course reviews", viewOnly:"View only", loading:"Loading reviews…", reviewCount:(n)=>`${n} reviews`, noResults:"No reviews match these filters. Try broadening your range.", loadError:"Could not load reviews. Check SELECT permissions and RLS policies on the Supabase reviews table.", workloadLabel:"Workload", easinessLabel:"Grading leniency", levelLabel:"Level", reviewTag:"Review", courseFallback:"Course", studentFallback:"Student", anonymous:"Anonymous", submitted:"Posted", instructor:"Instructor", footerNote:"Course reviews are a guide only; consider your own learning needs.", searchButton:"Search", reviewPages:"Review pages"
+    backToCourses:"Course ratings & submit", about:"About", heroEyebrow:"Waseda course review guide", heroDescription:"Real student reviews to help you find the right direction.", searchPlaceholder:"Search courses or instructors", filterTitle:"Filters", level:"Level", workload:"Workload", easiness:"Grading leniency", veryLight:"Light", veryHeavy:"Heavy", veryStrict:"Strict", veryEasy:"Lenient", category:"Course category", allCategories:"All categories", resetFilters:"Reset filters", allReviews:"Course reviews", viewOnly:"View only", loading:"Loading reviews…", reviewCount:(n)=>`${n} reviews`, noResults:"No reviews match these filters. Try broadening your range.", loadError:"Could not load reviews. Check SELECT permissions and RLS policies on the Supabase reviews table.", workloadLabel:"Workload", easinessLabel:"Grading leniency", levelLabel:"Level", reviewTag:"Review", courseFallback:"Course", studentFallback:"Student", anonymous:"Anonymous", submitted:"Posted", instructor:"Instructor", footerNote:"Course reviews are a guide only; consider your own learning needs.", searchButton:"Search", reviewPages:"Review pages", sortLabel:"Sort", sortHot:"Most popular", sortTime:"Newest first", like:"Like", liked:"Liked", loginToLike:"Sign in to like a review", likeError:"Could not update like. Please try again."
   }
 };
 let language = localStorage.getItem("course-review-language") || "en";
@@ -19,6 +19,11 @@ let categories = [];
 let levelMin = 1, levelMax = 8;
 const REVIEWS_PER_PAGE = 10;
 let currentReviewPage = 1;
+let currentSort = "hot";
+let currentUserId = null;
+let likesByReview = new Map();
+let likedReviewIds = new Set();
+const likeKey = (reviewId) => `user:${String(reviewId)}`;
 const tr = (key) => copy[language][key] ?? key;
 const avg = (rows, key) => rows.length ? rows.reduce((sum, row) => sum + Number(row[key] || 0), 0) / rows.length : null;
 const keyOf = (course) => String(course["Course ID"] ?? course["Course Name"] ?? "");
@@ -32,14 +37,7 @@ function applyLanguage() {
   $("languageToggle").textContent = language === "zh" ? "English" : "中文";
   renderFeed();
 }
-function populateCategories() {
-  const select = $("reviewCategoryFilter");
-  const current = select.value;
-  const values = [...new Set(allCourses.map(categoryOf).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
-  select.replaceChildren(new Option(tr("allCategories"), ""));
-  values.forEach(value => select.add(new Option(value, value)));
-  if (values.includes(current)) select.value = current;
-}
+function populateCategories() {}
 function selectedBounds() {
   const wMin = Number($("workloadMin").value), wMax = Number($("workloadMax").value);
   const eMin = Number($("easinessMin").value), eMax = Number($("easinessMax").value);
@@ -62,7 +60,8 @@ function clampRanges() {
   });
 }
 function matchesFilters(review, course, query, bounds, category) {
-  const haystack = `${course?.["Course Name"] || review.course_name || ""} ${course?.["Instructor"] || review.instructor || ""} ${review.comment || ""} ${review.display_name || ""}`.toLowerCase();
+  // Search only public course metadata. Never search review text or author fields: this prevents an account ID entered in the search box from surfacing anonymous reviews.
+  const haystack = `${course?.["Course Name"] || review.course_name || ""} ${course?.["Instructor"] || review.instructor || ""}`.toLowerCase();
   if (query && !haystack.includes(query)) return false;
   if (category && norm(categoryOf(course || {})) !== norm(category)) return false;
   const hasLevel = review.level !== null && review.level !== undefined && review.level !== "";
@@ -77,10 +76,17 @@ function renderFeed() {
   if (!feed) return;
   feed.replaceChildren();
   const query = $("reviewSearchInput").value.trim().toLowerCase();
-  const category = $("reviewCategoryFilter").value;
+  const category = $("reviewCategoryFilter")?.value || "";
   const bounds = selectedBounds();
   const coursesByKey = new Map(allCourses.map(course => [keyOf(course), course]));
   const visible = allReviews.filter(review => matchesFilters(review, coursesByKey.get(String(review.course_id)), query, bounds, category));
+  visible.sort((a, b) => {
+    if (currentSort === "hot") {
+      const diff = (likesByReview.get(reviewLikeKey(b)) || 0) - (likesByReview.get(reviewLikeKey(a)) || 0);
+      if (diff !== 0) return diff;
+    }
+    return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+  });
   const totalPages = Math.max(1, Math.ceil(visible.length / REVIEWS_PER_PAGE));
   if (currentReviewPage > totalPages) currentReviewPage = totalPages;
   $("reviewCount").textContent = tr("reviewCount")(visible.length);
@@ -114,11 +120,72 @@ function renderFeed() {
       const score3 = document.createElement("div"); score3.className = "feed-score level-score"; score3.innerHTML = `<span>${tr("levelLabel")}</span><strong>${Number(review.level).toFixed(1)} / 8</strong>`;
       stats.append(score1,score2,score3);
     } else { stats.append(score1,score2); }
-    main.append(meta,title,instructorLine,tags,comment);
+    const actions = document.createElement("div");
+    actions.className = "feed-review-actions";
+    const likeButton = document.createElement("button");
+    likeButton.type = "button";
+    likeButton.className = "review-like-button";
+    const key = reviewLikeKey(review);
+    const liked = likedReviewIds.has(key);
+    likeButton.textContent = `${liked ? "♥" : "♡"} ${likesByReview.get(key) || 0} ${tr(liked ? "liked" : "like")}`;
+    likeButton.classList.toggle("is-liked", liked);
+    likeButton.addEventListener("click", () => toggleReviewLike(review, likeButton));
+    actions.appendChild(likeButton);
+    main.append(meta,title,instructorLine,tags,comment,actions);
     article.append(avatar,main,stats); feed.appendChild(article);
   });
   renderPagination(visible.length);
 }
+function reviewLikeKey(review) { return `${review.source ? "imported" : "user"}:${String(review.id)}`; }
+
+async function toggleReviewLike(review, button) {
+  const { data: { user }, error: authError } = await client.auth.getUser();
+  if (authError || !user) {
+    alert(tr("loginToLike"));
+    return;
+  }
+  const key = reviewLikeKey(review);
+  const alreadyLiked = likedReviewIds.has(key);
+  button.disabled = true;
+  try {
+    if (alreadyLiked) {
+      const { error } = await client.from("review_likes").delete()
+        .eq("review_id", key).eq("user_id", user.id);
+      if (error) throw error;
+      likedReviewIds.delete(key);
+      likesByReview.set(key, Math.max(0, (likesByReview.get(key) || 0) - 1));
+    } else {
+      const { error } = await client.from("review_likes").insert({ review_id: key, user_id: user.id });
+      if (error) throw error;
+      likedReviewIds.add(key);
+      likesByReview.set(key, (likesByReview.get(key) || 0) + 1);
+    }
+    renderFeed();
+  } catch (error) {
+    console.error("Like update failed:", error);
+    alert(tr("likeError"));
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function loadLikes() {
+  const { data: { user } } = await client.auth.getUser();
+  currentUserId = user?.id || null;
+  const { data, error } = await client.from("review_likes").select("review_id, user_id");
+  if (error) {
+    console.error("Likes query failed:", error);
+    return;
+  }
+  likesByReview = new Map();
+  likedReviewIds = new Set();
+  (data || []).forEach(row => {
+    const key = String(row.review_id);
+    likesByReview.set(key, (likesByReview.get(key) || 0) + 1);
+    if (currentUserId && row.user_id === currentUserId) likedReviewIds.add(key);
+  });
+}
+
 function renderPagination(totalItems) {
   const nav = $("reviewPagination");
   if (!nav) return;
@@ -138,69 +205,42 @@ function renderPagination(totalItems) {
   makeButton(language === "zh" ? "下一页" : "Next", Math.min(totalPages, currentReviewPage + 1), currentReviewPage === totalPages);
 }
 
-
 async function init() {
   applyLanguage();
-
-  const [courseResult, reviewResult, externalResult] = await Promise.all([
+  const [courseResult, reviewResult, importedResult] = await Promise.all([
     client.from("CJL Courses").select("*"),
-
-    client
-      .from("reviews")
-      .select("id, course_id, workload, easiness, level, comment, created_at, is_anonymous, display_name")
-      .order("created_at", { ascending: false }),
-
-    client
-      .from("external_reviews_with_courses")
-      .select("id:review_id, course_id, course_name, instructor, category, display_name, workload, easiness, level, comment, is_anonymous, source, created_at:imported_at")
-      .order("imported_at", { ascending: false })
+    client.from("reviews").select("id, course_id, workload, easiness, level, comment, created_at, is_anonymous, display_name").order("created_at", {ascending:false}),
+    client.from("imported_reviews").select("id, course_id, course_name, instructor, display_name, workload, easiness, level, comment, is_anonymous, source, imported_at").order("imported_at", {ascending:false})
   ]);
-
-  if (courseResult.error) {
-    console.error("Courses query failed", courseResult.error);
-  }
-  if (reviewResult.error) {
-    console.error("Reviews query failed", reviewResult.error);
-  }
-  if (externalResult.error) {
-    console.error("External reviews query failed", externalResult.error);
-  }
-
-  if (courseResult.error || (reviewResult.error && externalResult.error)) {
+  if (courseResult.error) console.error("Courses query failed", courseResult.error);
+  if (reviewResult.error) console.error("Reviews query failed", reviewResult.error);
+  if (importedResult.error) console.error("Imported reviews query failed", importedResult.error);
+  if (reviewResult.error && importedResult.error) {
     $("reviewsStatus").textContent = tr("loadError");
     $("reviewCount").textContent = "";
     return;
   }
-
   allCourses = courseResult.data || [];
-
-  const userReviews = (reviewResult.data || []).map(row => ({
-    ...row,
-    source: null
-  }));
-
-  const externalReviews = (externalResult.data || []).map(row => ({
-    ...row,
-    created_at: row.created_at,
-    source: row.source || "external"
-  }));
-
-  allReviews = [...userReviews, ...externalReviews].sort(
-    (a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)
-  );
-
-  populateCategories();
-  clampRanges();
-  renderFeed();
-
+  await loadLikes();
+  const userReviews = (reviewResult.data || []).map(row => ({...row, source: null}));
+  const importedReviews = (importedResult.data || []).map(row => ({...row, created_at: row.imported_at, source: row.source || "external"}));
+  allReviews = [...userReviews, ...importedReviews].sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  if ($("reviewCategoryFilter")) populateCategories();
+  clampRanges(); renderFeed();
   $("reviewsStatus").textContent = "";
 }
 
-$("languageToggle").addEventListener("click", () => { language = language === "zh" ? "en" : "zh"; localStorage.setItem("course-review-language", language); populateCategories(); applyLanguage(); });
+$("languageToggle").addEventListener("click", () => { language = language === "zh" ? "en" : "zh"; localStorage.setItem("course-review-language", language); if ($("reviewCategoryFilter")) populateCategories(); applyLanguage(); });
 $("reviewSearchForm").addEventListener("submit", event => { event.preventDefault(); currentReviewPage = 1; renderFeed(); });
 $("reviewSearchInput").addEventListener("input", () => { currentReviewPage = 1; renderFeed(); });
-$("reviewCategoryFilter").addEventListener("change", () => { currentReviewPage = 1; renderFeed(); });
-for (const id of ["workloadMin","workloadMax","easinessMin","easinessMax"]) $(id).addEventListener("input", () => { currentReviewPage = 1; clampRanges(); renderFeed(); });
+$("reviewSort")?.addEventListener("change", () => { currentSort = $("reviewSort").value; currentReviewPage = 1; renderFeed(); });
+$("reviewCategoryFilter")?.addEventListener("change", () => { currentReviewPage = 1; renderFeed(); });
+for (const id of ["workloadMin","workloadMax","easinessMin","easinessMax"]) {
+  const control = $(id);
+  control.addEventListener("pointerdown", () => { control.style.zIndex = "6"; });
+  control.addEventListener("blur", () => { control.style.zIndex = ""; });
+  control.addEventListener("input", () => { currentReviewPage = 1; clampRanges(); renderFeed(); });
+}
 document.querySelectorAll("#levelChipFilter button").forEach(button => button.addEventListener("click", () => {
   const n = Number(button.dataset.level);
   if (n < levelMin || (levelMin === 1 && levelMax === 8)) { levelMin = n; levelMax = n; }
@@ -211,6 +251,6 @@ document.querySelectorAll("#levelChipFilter button").forEach(button => button.ad
   currentReviewPage = 1; clampRanges(); renderFeed();
 }));
 $("resetReviewFilters").addEventListener("click", () => {
-  currentReviewPage = 1; levelMin = 1; levelMax = 8; $("workloadMin").value = 1; $("workloadMax").value = 10; $("easinessMin").value = 1; $("easinessMax").value = 10; $("reviewCategoryFilter").value = ""; $("reviewSearchInput").value = ""; clampRanges(); renderFeed();
+  currentReviewPage = 1; levelMin = 1; levelMax = 8; $("workloadMin").value = 1; $("workloadMax").value = 10; $("easinessMin").value = 1; $("easinessMax").value = 10; if ($("reviewCategoryFilter")) $("reviewCategoryFilter").value = ""; $("reviewSearchInput").value = ""; clampRanges(); renderFeed();
 });
-init();
+init().catch(error => { console.error("Review page initialization failed:", error); const status = $("reviewsStatus"); if (status) status.textContent = tr("loadError"); const count = $("reviewCount"); if (count) count.textContent = ""; });

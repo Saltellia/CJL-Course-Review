@@ -15,7 +15,6 @@
     <nav class="compass-nav">
       <a href="index.html" data-i18n="backToCourses">课程评价与提交</a>
       <button id="languageToggle" class="language-toggle" type="button">English</button>
-      <a href="index.html#about" data-i18n="about">关于我们</a>
       <span class="nav-avatar" aria-hidden="true">♟</span>
     </nav>
   </header>
@@ -59,16 +58,13 @@
         <div class="filter-dual-range"><input id="easinessMin" type="range" min="1" max="10" value="1" aria-label="Minimum easiness"><input id="easinessMax" type="range" min="1" max="10" value="10" aria-label="Maximum easiness"></div>
         <div class="range-caption"><span data-i18n="veryStrict">Strict</span><span data-i18n="veryEasy">Lenient</span></div>
       </section>
-      <label class="category-label" for="reviewCategoryFilter" data-i18n="category">Course category</label>
-      <select id="reviewCategoryFilter"><option value="" data-i18n="allCategories">All categories</option></select>
-      <button id="resetReviewFilters" class="reset-review-filters" type="button" data-i18n="resetFilters">Reset filters</button>
-      <div class="sidebar-compass" aria-hidden="true"><span>N</span><div>✥</div><small>W　　　　 E</small></div>
+      <button id="resetReviewFilters" class="reset-review-filters" type="button" data-i18n="resetFilters">Reset filters</button></div>
     </aside>
 
     <section class="review-feed-area">
       <div class="feed-toolbar">
         <div><h2 data-i18n="allReviews">Course reviews</h2><p id="reviewCount" class="feed-count">正在加载评价…</p></div>
-        <span class="view-only-badge" data-i18n="viewOnly">View only</span>
+        <div class="feed-toolbar-actions"><label for="reviewSort" data-i18n="sortLabel">排序</label><select id="reviewSort"><option value="hot" data-i18n="sortHot">按热度排序</option><option value="time" data-i18n="sortTime">按时间排序</option></select><span class="view-only-badge" data-i18n="viewOnly">View only</span></div></div>
       </div>
       <p id="reviewsStatus" class="reviews-status" role="status"></p>
       <div id="reviewFeed" class="review-feed"></div>
