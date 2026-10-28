@@ -26,7 +26,21 @@ let likedReviewIds = new Set();
 const likeKey = (reviewId) => `user:${String(reviewId)}`;
 const tr = (key) => copy[language][key] ?? key;
 const avg = (rows, key) => rows.length ? rows.reduce((sum, row) => sum + Number(row[key] || 0), 0) / rows.length : null;
-const keyOf = (course) => String(course["Course ID"] ?? course["Course Name"] ?? "");
+const keyOf = (course) => String(course["Course ID"] ?? course["Course Name"] ?? "").trim();
+const normalizeCourseId = (value) => {
+  const text = String(value ?? "").trim();
+  if (!text) return "";
+  // Treat numeric IDs such as 173 and "173.0" as the same ID.
+  const numeric = Number(text);
+  return Number.isFinite(numeric) && text !== "" ? String(numeric) : text.toLowerCase();
+};
+const resolveCourse = (review, coursesById, coursesByName) => {
+  const id = normalizeCourseId(review.course_id);
+  if (id && coursesById.has(id)) return coursesById.get(id);
+  const name = norm(review.course_name);
+  if (name && coursesByName.has(name)) return coursesByName.get(name);
+  return {};
+};
 const categoryOf = (course) => String(course["Category"] ?? course["Course Category"] ?? course["Course Type"] ?? course["カテゴリー"] ?? "").trim();
 const norm = (v) => String(v || "").trim().toLowerCase().replace(/\s+/g, "");
 function applyLanguage() {
@@ -78,8 +92,15 @@ function renderFeed() {
   const query = $("reviewSearchInput").value.trim().toLowerCase();
   const category = $("reviewCategoryFilter")?.value || "";
   const bounds = selectedBounds();
-  const coursesByKey = new Map(allCourses.map(course => [keyOf(course), course]));
-  const visible = allReviews.filter(review => matchesFilters(review, coursesByKey.get(String(review.course_id)), query, bounds, category));
+  const coursesById = new Map();
+  const coursesByName = new Map();
+  allCourses.forEach(course => {
+    const id = normalizeCourseId(course["Course ID"]);
+    const name = norm(course["Course Name"]);
+    if (id) coursesById.set(id, course);
+    if (name) coursesByName.set(name, course);
+  });
+  const visible = allReviews.filter(review => matchesFilters(review, resolveCourse(review, coursesById, coursesByName), query, bounds, category));
   visible.sort((a, b) => {
     if (currentSort === "hot") {
       const diff = (likesByReview.get(reviewLikeKey(b)) || 0) - (likesByReview.get(reviewLikeKey(a)) || 0);
@@ -96,7 +117,7 @@ function renderFeed() {
   const pageStart = (currentReviewPage - 1) * REVIEWS_PER_PAGE;
   const pageReviews = visible.slice(pageStart, pageStart + REVIEWS_PER_PAGE);
   pageReviews.forEach(review => {
-    const course = coursesByKey.get(String(review.course_id)) || {};
+    const course = resolveCourse(review, coursesById, coursesByName);
     const courseName = course["Course Name"] || review.course_name || String(review.course_id || tr("courseFallback"));
     const instructor = course["Instructor"] || review.instructor || "—";
     const related = allReviews.filter(r => String(r.course_id) === String(review.course_id));
